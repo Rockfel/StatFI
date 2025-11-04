@@ -1,4 +1,1 @@
 { "semi": true, "singleQuote": true, "printWidth": 100 }
-
-git config --global user.name "Rockfel ELISHA"
-git config --global user.email "rockfelpro@gmail.com"

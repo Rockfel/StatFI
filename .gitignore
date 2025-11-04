@@ -1,3 +1,14 @@
+# Node.js
 node_modules/
-.env
 dist/
+.env
+.env.local
+npm-debug.log
+yarn-error.log
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.DS_Store
