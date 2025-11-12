@@ -1,6 +1,11 @@
-import { app } from "./setup/app.js";
+import express from "express";
+import cors from "cors";
+import routes from "./routes/index.js";
 
-const port = Number(process.env.PORT || 3000);
-app.listen(port, () => {
-  console.log(`✅ API up at http://localhost:${port}`);
-});
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use("/api", routes);
+
+export default app;

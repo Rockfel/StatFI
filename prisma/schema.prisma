@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model famille_impact {
+  id          Int           @id @default(autoincrement())
+  nom         String        @db.VarChar(100)
+  zone_id     Int
+  zone        zone          @relation(fields: [zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reunion     reunion[]
+  utilisateur utilisateur[]
+}
+
+model invite {
+  id         Int     @id @default(autoincrement())
+  nom        String  @db.VarChar(100)
+  prenom     String? @db.VarChar(100)
+  reunion_id Int
+  reunion    reunion @relation(fields: [reunion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model participation {
+  id          Int         @id @default(autoincrement())
+  reunion_id  Int
+  membre_id   Int
+  statut      String      @db.VarChar(10)
+  utilisateur utilisateur @relation(fields: [membre_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reunion     reunion     @relation(fields: [reunion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([reunion_id, membre_id])
+  @@unique([reunion_id, membre_id], map: "ux_participation_unique")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reunion {
+  id             Int             @id @default(autoincrement())
+  fi_id          Int
+  date_reunion   DateTime        @db.Date
+  type           String          @db.VarChar(20)
+  compte_rendu   String?
+  nb_invites     Int?            @default(0)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  invite         invite[]
+  participation  participation[]
+  famille_impact famille_impact  @relation(fields: [fi_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model role {
+  id               Int                @id @default(autoincrement())
+  code             String             @unique @db.VarChar(20)
+  libelle          String?            @db.VarChar(100)
+  utilisateur_role utilisateur_role[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tmp_participation_stage {
+  membre_key     String?
+  date_reunion   DateTime @db.Date
+  statut         String
+  nom_clean      String?
+  fi             String?
+  key_prenom_nom String?
+  key_nom_prenom String?
+
+  @@ignore
+}
+
+model utilisateur {
+  id                                         Int                @id @default(autoincrement())
+  nom                                        String             @db.VarChar(100)
+  prenom                                     String?            @db.VarChar(100)
+  email                                      String             @unique @db.VarChar(150)
+  mot_de_passe                               String             @db.VarChar(255)
+  zone_id                                    Int?
+  fi_id                                      Int?
+  last_login                                 DateTime?          @db.Timestamptz(6)
+  created_at                                 DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                                 DateTime           @default(now()) @db.Timestamptz(6)
+  participation                              participation[]
+  famille_impact                             famille_impact?    @relation(fields: [fi_id], references: [id], onUpdate: NoAction)
+  zone_utilisateur_zone_idTozone             zone?              @relation("utilisateur_zone_idTozone", fields: [zone_id], references: [id], onUpdate: NoAction)
+  utilisateur_role                           utilisateur_role[]
+  zone_zone_responsable_zone_idToutilisateur zone[]             @relation("zone_responsable_zone_idToutilisateur")
+}
+
+model utilisateur_role {
+  utilisateur_id Int
+  role_id        Int
+  role           role        @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  utilisateur    utilisateur @relation(fields: [utilisateur_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([utilisateur_id, role_id])
+}
+
+model zone {
+  id                                                Int              @id @default(autoincrement())
+  nom                                               String           @db.VarChar(100)
+  responsable_zone_id                               Int?
+  famille_impact                                    famille_impact[]
+  utilisateur_utilisateur_zone_idTozone             utilisateur[]    @relation("utilisateur_zone_idTozone")
+  utilisateur_zone_responsable_zone_idToutilisateur utilisateur?     @relation("zone_responsable_zone_idToutilisateur", fields: [responsable_zone_id], references: [id], onUpdate: NoAction, map: "fk_zone_responsable")
+}
